@@ -1,2 +1,3 @@
-# how-you-feel-today-app-
+# how-you-feel-today-app
+
 face and feel recognizing app

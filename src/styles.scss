@@ -4,20 +4,18 @@
 
 body {
   margin: 0 20px;
-  height: 100vh;
   width: calc(100vw - 40px);
-  overflow: hidden;
 }
 #root {
   display: grid;
-  grid-template-rows: 100px 1fr 50px;
-  height: 100%;
+  grid-template-rows: 100px calc(100vh - 161px) 50px;
 }
 
 main {
   display: grid;
-  grid-template-columns: 120px 1fr;
+  grid-template-columns: 120px 1fr 1fr;
   column-gap: 20px;
+  grid-template-rows: calc(100vh - 161px);
 }
 
 ul {
@@ -39,7 +37,7 @@ b {
   margin-bottom: 20px;
 }
 
-div[class*="col"] {
+div[class*='col'] {
   display: grid;
   column-gap: 20px;
 }
@@ -48,4 +46,9 @@ div[class*="col"] {
   &-3 {
     grid-template-columns: 1fr 1fr 1fr;
   }
+}
+
+img {
+  width: 100%;
+  object-fit: contain;
 }

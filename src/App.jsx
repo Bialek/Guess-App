@@ -1,12 +1,21 @@
-import React, { useState, createContext, useContext } from 'react';
+import React, { useState, createContext, useContext, useEffect } from 'react';
 import { BrowserRouter as Router, Switch, Route, Link } from 'react-router-dom';
+
+const readURL = file => {
+  return new Promise((res, rej) => {
+    const reader = new FileReader();
+    reader.onload = e => res(e.target.result);
+    reader.onerror = e => rej(e);
+    reader.readAsDataURL(file);
+  });
+};
 
 const AppContext = createContext(null);
 
 const initialAppData = {
   type: undefined,
   value: undefined,
-  photoData: undefined,
+  detectDate: undefined,
 };
 
 function App() {
@@ -65,6 +74,37 @@ function App() {
 
 export default App;
 
+async function detectByURlRequest(url) {
+  const api_key = 'm91i3eb05usl1nmkk3fcdk5i64';
+  const api_secret = 'q38s6vu0gsm9go0843tlat6as5';
+  //should be in env files ^^
+  const response = await fetch(
+    `http://api.skybiometry.com/fc/faces/detect.json?api_key=${api_key}&api_secret=${api_secret}&urls=${url}&attributes=all`
+  );
+  const data = await response.json();
+  return data;
+}
+
+async function detectByFileRequest(file) {
+  const api_key = 'm91i3eb05usl1nmkk3fcdk5i64';
+  const api_secret = 'q38s6vu0gsm9go0843tlat6as5';
+  //should be in env files ^^
+  console.log(file);
+
+  // const response = await fetch(
+  //   `http://api.skybiometry.com/fc/faces/detect.json?api_key=${api_key}&api_secret=${api_secret}&attributes=all`,
+  //   {
+  //     method: 'POST',
+  //     headers: {
+  //       'Content-Type': 'image/jpeg',
+  //     },
+  //     body: file,
+  //   }
+  // );
+  // const data = await response.json();
+  // return data;
+}
+
 function Home() {
   return (
     <div>
@@ -97,7 +137,18 @@ function UploadCamera() {
   return <h2>Camera</h2>;
 }
 function UploadFile() {
-  return <h2>File</h2>;
+  const { appData, setAppDate } = useContext(AppContext);
+
+  return (
+    <div>
+      <b>select your photo files</b>
+      <input
+        type="file"
+        onChange={e => setAppDate({ type: 'file', value: e.target.files[0] })}
+      />
+      <Link to="/display">Submit</Link>
+    </div>
+  );
 }
 function UploadUrl() {
   const { appData, setAppDate } = useContext(AppContext);
@@ -116,8 +167,61 @@ function UploadUrl() {
 
 function Display() {
   const { appData, setAppDate } = useContext(AppContext);
+  const [img, setImg] = useState(undefined);
+  const [isLoading, setIsLoading] = useState(false);
 
-  console.log(appData);
+  useEffect(() => {
+    if (
+      appData &&
+      appData.value &&
+      appData.detectDate === undefined &&
+      !isLoading
+    ) {
+      setIsLoading(true);
+      if (appData.type === 'url') {
+        setImg(appData.value);
+        detectByURlRequest(appData.value).then(value => {
+          setAppDate({ ...appData, detectDate: value });
+          setIsLoading(false);
+        });
+      }
+      if (appData.type === 'file') {
+        console.log(appData.value);
+        console.log(readURL(appData.value));
+        readURL(appData.value).then(value => setImg(value));
 
-  return <div></div>;
+        detectByFileRequest(appData.value).then(value => {
+          setAppDate({ ...appData, detectDate: value });
+          setIsLoading(false);
+        });
+      }
+    }
+  }, [appData, setAppDate]);
+
+  return (
+    <>
+      <div className="display">
+        <img src={img} alt="yourFace" />
+      </div>
+
+      {appData && appData.detectDate !== undefined ? (
+        <DetectedInfo />
+      ) : (
+        <div>
+          <b>Error!</b>
+        </div>
+      )}
+    </>
+  );
+}
+
+function DetectedInfo() {
+  const { appData, setAppDate } = useContext(AppContext);
+  console.log(appData.detectDate);
+
+  return (
+    <div>
+      <div>appData.</div>
+    </div>
+  );
 }
