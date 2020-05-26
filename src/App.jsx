@@ -5,7 +5,13 @@ import React, {
   useEffect,
   useRef,
 } from 'react';
-import { BrowserRouter as Router, Switch, Route, Link } from 'react-router-dom';
+import {
+  BrowserRouter as Router,
+  Switch,
+  Route,
+  Link,
+  useHistory,
+} from 'react-router-dom';
 
 const API_KEY = 'm91i3eb05usl1nmkk3fcdk5i64';
 const API_SECRET = 'q38s6vu0gsm9go0843tlat6as5';
@@ -154,6 +160,14 @@ function UploadCamera() {
   const { appData, setAppDate } = useContext(AppContext);
   const [mediaStream, setMediaStream] = useState(null);
 
+  const history = useHistory();
+
+  function cleanup() {
+    mediaStream.getTracks().forEach(track => {
+      track.stop();
+    });
+  }
+
   useEffect(() => {
     async function enableStream() {
       try {
@@ -162,16 +176,14 @@ function UploadCamera() {
         );
         setMediaStream(stream);
       } catch (err) {
-        console.log(err);
+        // Removed for brevity
       }
     }
 
-    if (mediaStream === null) {
+    if (!mediaStream) {
       enableStream();
     } else {
-      return mediaStream.getTracks().forEach(track => {
-        track.stop();
-      });
+      return () => cleanup();
     }
   }, [mediaStream]);
 
@@ -189,19 +201,24 @@ function UploadCamera() {
   function handleCapture() {
     const context = canvasRef.current.getContext('2d');
 
-    context.drawImage(videoRef.current, 10, 10);
+    context.drawImage(videoRef.current, 0, 0, 1280, 720);
 
-    canvasRef.current.toBlob(blob => setAppDate({ type: 'file', value: blob }));
+    canvasRef.current.toBlob(blob =>
+      setAppDate({ type: 'camera', value: blob })
+    );
+    cleanup();
+    history.push('/display');
   }
 
   return (
     <div>
       <video ref={videoRef} onCanPlay={handleCanPlay} autoPlay muted />
-      <canvas ref={canvasRef} />
       <button onClick={handleCapture}>Submit</button>
+      <canvas ref={canvasRef} width={1280} height={720} />
     </div>
   );
 }
+
 function UploadFile() {
   const { appData, setAppDate } = useContext(AppContext);
 
@@ -216,6 +233,7 @@ function UploadFile() {
     </div>
   );
 }
+
 function UploadUrl() {
   const { appData, setAppDate } = useContext(AppContext);
   return (
@@ -236,6 +254,8 @@ function Display() {
   const [img, setImg] = useState(undefined);
   const [isLoading, setIsLoading] = useState(false);
 
+  console.log(appData);
+
   useEffect(() => {
     if (
       appData &&
@@ -252,9 +272,15 @@ function Display() {
         });
       }
       if (appData.type === 'file') {
-        console.log(appData.value);
-        console.log(readURL(appData.value));
         readURL(appData.value).then(value => setImg(value));
+
+        detectByFileRequest(appData.value).then(value => {
+          setAppDate({ ...appData, detectDate: value });
+          setIsLoading(false);
+        });
+      }
+      if (appData.type === 'camera') {
+        setImg(URL.createObjectURL(appData.value));
 
         detectByFileRequest(appData.value).then(value => {
           setAppDate({ ...appData, detectDate: value });
