@@ -1,5 +1,20 @@
-import React, { useState, createContext, useContext, useEffect } from 'react';
+import React, {
+  useState,
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+} from 'react';
 import { BrowserRouter as Router, Switch, Route, Link } from 'react-router-dom';
+
+const API_KEY = 'm91i3eb05usl1nmkk3fcdk5i64';
+const API_SECRET = 'q38s6vu0gsm9go0843tlat6as5';
+//should be in env files ^^
+
+const CAPTURE_OPTIONS = {
+  audio: false,
+  video: { facingMode: 'environment' },
+};
 
 const readURL = file => {
   return new Promise((res, rej) => {
@@ -75,34 +90,36 @@ function App() {
 export default App;
 
 async function detectByURlRequest(url) {
-  const api_key = 'm91i3eb05usl1nmkk3fcdk5i64';
-  const api_secret = 'q38s6vu0gsm9go0843tlat6as5';
-  //should be in env files ^^
   const response = await fetch(
-    `http://api.skybiometry.com/fc/faces/detect.json?api_key=${api_key}&api_secret=${api_secret}&urls=${url}&attributes=all`
+    `http://api.skybiometry.com/fc/faces/detect.json?api_key=${API_KEY}&api_secret=${API_SECRET}&urls=${url}&attributes=all`
   );
   const data = await response.json();
   return data;
 }
 
 async function detectByFileRequest(file) {
-  const api_key = 'm91i3eb05usl1nmkk3fcdk5i64';
-  const api_secret = 'q38s6vu0gsm9go0843tlat6as5';
-  //should be in env files ^^
-  console.log(file);
+  const data = new FormData();
 
-  // const response = await fetch(
-  //   `http://api.skybiometry.com/fc/faces/detect.json?api_key=${api_key}&api_secret=${api_secret}&attributes=all`,
-  //   {
-  //     method: 'POST',
-  //     headers: {
-  //       'Content-Type': 'image/jpeg',
-  //     },
-  //     body: file,
-  //   }
-  // );
-  // const data = await response.json();
-  // return data;
+  data.append(file.name, file);
+
+  const post = await fetch(
+    `http://api.skybiometry.com/fc/faces/detect.json?api_key=${API_KEY}&api_secret=${API_SECRET}&attributes=all`,
+    {
+      method: 'POST',
+      headers: {
+        accept: '*/*',
+        'accept-language': 'en,pl-PL;q=0.9,pl;q=0.8,en-US;q=0.7',
+        'content-type':
+          'multipart/form-data; boundary=----WebKitFormBoundaryLt6uRXWisasam5wO',
+        'sec-fetch-dest': 'empty',
+        'sec-fetch-mode': 'cors',
+        'sec-fetch-site': 'same-site',
+      },
+      body: data,
+    }
+  );
+  const response = await post.json();
+  return response;
 }
 
 function Home() {
@@ -134,7 +151,56 @@ function UploadSelector() {
 }
 
 function UploadCamera() {
-  return <h2>Camera</h2>;
+  const { appData, setAppDate } = useContext(AppContext);
+  const [mediaStream, setMediaStream] = useState(null);
+
+  useEffect(() => {
+    async function enableStream() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia(
+          CAPTURE_OPTIONS
+        );
+        setMediaStream(stream);
+      } catch (err) {
+        console.log(err);
+      }
+    }
+
+    if (mediaStream === null) {
+      enableStream();
+    } else {
+      return mediaStream.getTracks().forEach(track => {
+        track.stop();
+      });
+    }
+  }, [mediaStream]);
+
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+
+  if (mediaStream && videoRef.current && !videoRef.current.srcObject) {
+    videoRef.current.srcObject = mediaStream;
+  }
+
+  function handleCanPlay() {
+    videoRef.current.play();
+  }
+
+  function handleCapture() {
+    const context = canvasRef.current.getContext('2d');
+
+    context.drawImage(videoRef.current, 10, 10);
+
+    canvasRef.current.toBlob(blob => setAppDate({ type: 'file', value: blob }));
+  }
+
+  return (
+    <div>
+      <video ref={videoRef} onCanPlay={handleCanPlay} autoPlay muted />
+      <canvas ref={canvasRef} />
+      <button onClick={handleCapture}>Submit</button>
+    </div>
+  );
 }
 function UploadFile() {
   const { appData, setAppDate } = useContext(AppContext);

@@ -48,7 +48,12 @@ div[class*='col'] {
   }
 }
 
-img {
+img,
+video,
+canvas {
   width: 100%;
+}
+
+img {
   object-fit: contain;
 }
