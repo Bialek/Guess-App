@@ -13,13 +13,19 @@ import {
   useHistory,
 } from 'react-router-dom';
 
+import 'font-awesome/css/font-awesome.css';
+
 const API_KEY = 'm91i3eb05usl1nmkk3fcdk5i64';
 const API_SECRET = 'q38s6vu0gsm9go0843tlat6as5';
 //should be in env files ^^
 
 const CAPTURE_OPTIONS = {
   audio: false,
-  video: { facingMode: 'environment' },
+  video: {
+    facingMode: 'environment',
+    width: { ideal: 1280 },
+    height: { ideal: 720 },
+  },
 };
 
 const readURL = file => {
@@ -41,51 +47,81 @@ const initialAppData = {
 
 function App() {
   const [appData, setAppDate] = useState(initialAppData);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
     <AppContext.Provider value={{ appData, setAppDate }}>
       <Router>
         <>
           <header>
-            <h1>How you feel today App</h1>
+            <nav
+              className="navbar is-primary"
+              role="navigation"
+              aria-label="main navigation">
+              <div className="navbar-brand">
+                <img
+                  className="logo"
+                  src={process.env.PUBLIC_URL + '/logo.png'}
+                  alt="logo"
+                />
+
+                <div
+                  className={`navbar-burger burger ${
+                    isMobileMenuOpen ? 'is-active' : ''
+                  } `}
+                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+                  <span aria-hidden="true"></span>
+                  <span aria-hidden="true"></span>
+                  <span aria-hidden="true"></span>
+                </div>
+              </div>
+
+              <div
+                className={`navbar-menu ${
+                  isMobileMenuOpen ? 'is-active' : ''
+                }`}>
+                <div className="navbar-start">
+                  <Link to="/" className="navbar-item">
+                    Home
+                  </Link>
+
+                  <Link to="/upload" className="navbar-item">
+                    New photo
+                  </Link>
+                </div>
+              </div>
+            </nav>
           </header>
 
-          <main className="main">
-            <nav>
-              <ul>
-                <li>
-                  <Link to="/">Home</Link>
-                </li>
-                <li>
-                  <Link to="/upload">New photo</Link>
-                </li>
-              </ul>
-            </nav>
+          <section className="section">
+            <div className="container">
+              <Switch>
+                <Route path="/upload" exact={true}>
+                  <UploadSelector />
+                </Route>
+                <Route path="/upload/camera">
+                  <UploadCamera />
+                </Route>
+                <Route path="/upload/file">
+                  <UploadFile />
+                </Route>
+                <Route path="/upload/url">
+                  <UploadUrl />
+                </Route>
+                <Route path="/display">
+                  <Display />
+                </Route>
+                <Route path="/" exact={true}>
+                  <Home />
+                </Route>
+              </Switch>
+            </div>
+          </section>
 
-            <Switch className="main">
-              <Route path="/upload" exact={true}>
-                <UploadSelector />
-              </Route>
-              <Route path="/upload/camera">
-                <UploadCamera />
-              </Route>
-              <Route path="/upload/file">
-                <UploadFile />
-              </Route>
-              <Route path="/upload/url">
-                <UploadUrl />
-              </Route>
-              <Route path="/display">
-                <Display />
-              </Route>
-              <Route path="/" exact={true}>
-                <Home />
-              </Route>
-            </Switch>
-          </main>
-
-          <footer>
-            <h4>Created by Rafał Białek</h4>
+          <footer className="footer">
+            <div className="content has-text-centered">
+              <h4>Created by Rafał Białek</h4>
+            </div>
           </footer>
         </>
       </Router>
@@ -131,9 +167,14 @@ async function detectByFileRequest(file) {
 function Home() {
   return (
     <div>
-      <b>Upload your photo and discover how you feel today</b>
-      <div>
-        <Link to="/upload">Upload new photo</Link>
+      <h1 className="title is-1 has-text-centered">Upload your photo</h1>
+      <h1 className="subtitle is-1 has-text-centered">
+        let me guess who you are and how you feel today
+      </h1>
+      <div className="has-text-centered">
+        <Link className="button is-primary is-large" to="/upload">
+          Upload new photo
+        </Link>
       </div>
     </div>
   );
@@ -146,11 +187,30 @@ function UploadSelector() {
 
   return (
     <div>
-      <b>How you want upload photo?</b>
-      <div className="col-3">
-        <Link to="/upload/camera">Camera</Link>
-        <Link to="/upload/file">File</Link>
-        <Link to="/upload/url">URL</Link>
+      <div className="content has-text-centered">
+        <h3 className="title is-3">How you want upload photo?</h3>
+      </div>
+      <div className="columns is-desktop">
+        <div className="column has-text-centered">
+          <Link className="button is-medium is-primary" to="/upload/camera">
+            Camera
+            <i className="fa fa-video-camera" aria-hidden="true"></i>
+          </Link>
+        </div>
+
+        <div className="column has-text-centered">
+          <Link className="button is-medium is-link" to="/upload/file">
+            File
+            <i className="fa fa-file-o" aria-hidden="true"></i>
+          </Link>
+        </div>
+
+        <div className="column has-text-centered">
+          <Link className="button is-medium is-success" to="/upload/url">
+            URL
+            <i className="fa fa-link" aria-hidden="true"></i>
+          </Link>
+        </div>
       </div>
     </div>
   );
@@ -176,7 +236,7 @@ function UploadCamera() {
         );
         setMediaStream(stream);
       } catch (err) {
-        // Removed for brevity
+        console.log(err);
       }
     }
 
@@ -212,9 +272,22 @@ function UploadCamera() {
 
   return (
     <div>
-      <video ref={videoRef} onCanPlay={handleCanPlay} autoPlay muted />
-      <button onClick={handleCapture}>Submit</button>
-      <canvas ref={canvasRef} width={1280} height={720} />
+      <div className="columns is-desktop">
+        <div className="column">
+          <div className="video-container">
+            <video ref={videoRef} onCanPlay={handleCanPlay} autoPlay muted />
+            <canvas ref={canvasRef} width="1280" height="720 " />
+          </div>
+        </div>
+
+        <div className="column has-text-right">
+          <button
+            className="button is-medium is-primary"
+            onClick={handleCapture}>
+            Submit
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -224,12 +297,42 @@ function UploadFile() {
 
   return (
     <div>
-      <b>select your photo files</b>
-      <input
-        type="file"
-        onChange={e => setAppDate({ type: 'file', value: e.target.files[0] })}
-      />
-      <Link to="/display">Submit</Link>
+      <div className="content has-text-centered">
+        <h3 className="title is-3">Select your photo files</h3>
+      </div>
+
+      <div className="columns is-desktop">
+        <div className="column">
+          <div className="field">
+            <div className="file is-primary has-name is-boxed">
+              <label className="file-label">
+                <input
+                  className="file-input"
+                  type="file"
+                  name="resume"
+                  onChange={e =>
+                    setAppDate({ type: 'file', value: e.target.files[0] })
+                  }
+                />
+                <span className="file-cta">
+                  <span className="file-icon">
+                    <i className="fa fa-cloud-upload" aria-hidden="true"></i>
+                  </span>
+                  <span className="file-label">Select file…</span>
+                </span>
+                <span className="file-name">
+                  {appData.type === 'file' ? appData.value.name : 'File name'}
+                </span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div className="column ">
+          <Link className="button is-primary is-medium" to="/display">
+            Submit
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }
@@ -238,13 +341,26 @@ function UploadUrl() {
   const { appData, setAppDate } = useContext(AppContext);
   return (
     <div>
-      <b>input url with http/https your photo</b>
-      <input
-        value={appData && appData.type === 'url' ? appData.value : ''}
-        type="text"
-        onChange={e => setAppDate({ type: 'url', value: e.target.value })}
-      />
-      <Link to="/display">Submit</Link>
+      <div className="content has-text-centered">
+        <h3 className="title is-3">Input url with http/https your photo</h3>
+      </div>
+
+      <div className="field">
+        <div className="control">
+          <input
+            className="input is-medium"
+            value={appData && appData.type === 'url' ? appData.value : ''}
+            type="text"
+            onChange={e => setAppDate({ type: 'url', value: e.target.value })}
+            placeholder="Input URL..."
+          />
+        </div>
+      </div>
+      <div className="has-text-right">
+        <Link className="button is-primary is-medium" to="/display">
+          Submit
+        </Link>
+      </div>
     </div>
   );
 }
@@ -291,19 +407,21 @@ function Display() {
   }, [appData, setAppDate]);
 
   return (
-    <>
-      <div className="display">
+    <div className="columns is-desktop">
+      <div className="column">
         <img src={img} alt="yourFace" />
       </div>
 
-      {appData && appData.detectDate !== undefined ? (
-        <DetectedInfo />
-      ) : (
-        <div>
-          <b>Error!</b>
-        </div>
-      )}
-    </>
+      <div className="column">
+        {appData && appData.detectDate !== undefined ? (
+          <DetectedInfo />
+        ) : (
+          <div>
+            <b>Error!</b>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
