@@ -133,7 +133,7 @@ export default App;
 
 async function detectByURlRequest(url) {
   const response = await fetch(
-    `http://api.skybiometry.com/fc/faces/detect.json?api_key=${API_KEY}&api_secret=${API_SECRET}&urls=${url}&attributes=all`
+    `https://api.skybiometry.com/fc/faces/detect.json?api_key=${API_KEY}&api_secret=${API_SECRET}&urls=${url}&attributes=all`
   );
   const data = await response.json();
   return data;
@@ -145,7 +145,7 @@ async function detectByFileRequest(file) {
   data.append(file.name, file);
 
   const post = await fetch(
-    `http://api.skybiometry.com/fc/faces/detect.json?api_key=${API_KEY}&api_secret=${API_SECRET}&attributes=all`,
+    `https://api.skybiometry.com/fc/faces/detect.json?api_key=${API_KEY}&api_secret=${API_SECRET}&attributes=all`,
     {
       method: 'POST',
       headers: {
