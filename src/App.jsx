@@ -111,7 +111,7 @@ function App() {
                 <Route path="/display">
                   <Display />
                 </Route>
-                <Route path="/" exact={true}>
+                <Route path="/Guess-App" exact={true}>
                   <Home />
                 </Route>
               </Switch>
@@ -435,7 +435,7 @@ function Display() {
       }
     }
     if (appData && appData.type === undefined) {
-      history.push('/');
+      history.push('/Guess-App');
     }
   }, [appData]);
 
