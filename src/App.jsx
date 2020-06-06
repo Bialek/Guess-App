@@ -165,6 +165,12 @@ async function detectByFileRequest(file) {
 }
 
 function Home() {
+  const { appData, setAppDate } = useContext(AppContext);
+
+  if (appData && appData.type !== undefined) {
+    setAppDate(initialAppData);
+  }
+
   return (
     <div>
       <h1 className="title is-1 has-text-centered">Upload your photo</h1>
@@ -183,7 +189,9 @@ function Home() {
 function UploadSelector() {
   const { appData, setAppDate } = useContext(AppContext);
 
-  setAppDate(initialAppData);
+  if (appData && appData.type !== undefined) {
+    setAppDate(initialAppData);
+  }
 
   return (
     <div>
@@ -247,6 +255,12 @@ function UploadCamera() {
     }
   }, [mediaStream]);
 
+  useEffect(() => {
+    if (appData && appData.type !== undefined) {
+      history.push('/display');
+    }
+  }, [appData]);
+
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
 
@@ -267,11 +281,13 @@ function UploadCamera() {
       setAppDate({ type: 'camera', value: blob })
     );
     cleanup();
-    history.push('/display');
   }
 
   return (
     <div>
+      <div className="content has-text-centered">
+        <h3 className="title is-3">Take a photo by your camera</h3>
+      </div>
       <div className="columns is-desktop">
         <div className="column">
           <div className="video-container">
@@ -370,7 +386,7 @@ function Display() {
   const [img, setImg] = useState(undefined);
   const [isLoading, setIsLoading] = useState(false);
 
-  console.log(appData);
+  const history = useHistory();
 
   useEffect(() => {
     if (
@@ -382,44 +398,70 @@ function Display() {
       setIsLoading(true);
       if (appData.type === 'url') {
         setImg(appData.value);
-        detectByURlRequest(appData.value).then(value => {
-          setAppDate({ ...appData, detectDate: value });
+        detectByURlRequest(appData.value).then(response => {
+          if (
+            response &&
+            response.photos[0] &&
+            response.photos[0].tags.lenght !== 0
+          ) {
+            setAppDate({ ...appData, detectDate: response.photos[0].tags[0] });
+          }
           setIsLoading(false);
         });
       }
       if (appData.type === 'file') {
         readURL(appData.value).then(value => setImg(value));
 
-        detectByFileRequest(appData.value).then(value => {
-          setAppDate({ ...appData, detectDate: value });
+        detectByFileRequest(appData.value).then(response => {
+          if (
+            response &&
+            response.photos[0] &&
+            response.photos[0].tags.lenght !== 0
+          ) {
+            setAppDate({ ...appData, detectDate: response.photos[0].tags[0] });
+          }
           setIsLoading(false);
         });
       }
       if (appData.type === 'camera') {
         setImg(URL.createObjectURL(appData.value));
 
-        detectByFileRequest(appData.value).then(value => {
-          setAppDate({ ...appData, detectDate: value });
+        detectByFileRequest(appData.value).then(response => {
+          if (
+            response &&
+            response.photos[0] &&
+            response.photos[0].tags.lenght !== 0
+          ) {
+            setAppDate({ ...appData, detectDate: response.photos[0].tags[0] });
+          }
           setIsLoading(false);
         });
       }
     }
-  }, [appData, setAppDate]);
+    if (appData && appData.type === undefined) {
+      history.push('/');
+    }
+  }, [appData, isLoading, history, setAppDate]);
 
   return (
-    <div className="columns is-desktop">
-      <div className="column">
-        <img src={img} alt="yourFace" />
+    <div>
+      <div className="content has-text-centered">
+        <h3 className="title is-3">I thing you are</h3>
       </div>
+      <div className="columns is-desktop">
+        <div className="column">
+          <img src={img} alt="yourFace" />
+        </div>
 
-      <div className="column">
-        {appData && appData.detectDate !== undefined ? (
-          <DetectedInfo />
-        ) : (
-          <div>
-            <b>Error!</b>
-          </div>
-        )}
+        <div className="column is-relative">
+          {!isLoading ? (
+            <DetectedInfo />
+          ) : (
+            <div className="loader-wrapper is-active">
+              <div className="loader is-loading"></div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -427,11 +469,58 @@ function Display() {
 
 function DetectedInfo() {
   const { appData, setAppDate } = useContext(AppContext);
-  console.log(appData.detectDate);
+
+  let data = {};
+
+  if (appData.detectDate !== undefined) {
+    const attributes = appData.detectDate.attributes;
+    data.age = attributes.age_est.value;
+
+    data.ethnicity = Object.entries(attributes.ethnicity).find(
+      item => item[1].value === 'true'
+    )[0];
+
+    data.gender = attributes.gender.value;
+
+    data.eyesOpened = attributes.eyes.value === 'open';
+
+    data.feeling = attributes.mood.value;
+
+    if (data.gender === 'female') {
+      data.element =
+        attributes.glasses.value === 'true' ||
+        attributes.dark_glasses.value === 'true'
+          ? 'glasses'
+          : attributes.hat.value === 'true' && 'hat';
+    }
+
+    if (data.gender === 'male') {
+      data.element =
+        attributes.mustache.value === 'true' ||
+        attributes.beard.value === 'true'
+          ? 'glasses'
+          : attributes.hat.value === 'true' && 'hat';
+    }
+  }
 
   return (
     <div>
-      <div>appData.</div>
+      {appData.detectDate === undefined && (
+        <h3 className="subtitle is-3">Error!</h3>
+      )}
+      {data.age && <span>{`You're about ${data.age} years old. `}</span>}
+      {data.ethnicity && data.gender && (
+        <span>{`I think you're a  ${data.ethnicity} ${
+          data.gender === 'female' ? 'women' : 'men'
+        }. `}</span>
+      )}
+      {data.eyesOpened === true && (
+        <span>The picture came out well, your eyes are open. </span>
+      )}
+      {data.element && <span>{`You have awasome ${data.menElement}. `}</span>}
+      {data.feeling && (
+        <span>{`In the picture, you look  ${data.feeling}. `}</span>
+      )}
     </div>
   );
 }
