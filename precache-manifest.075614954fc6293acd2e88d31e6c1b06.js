@@ -1,6 +1,6 @@
 self.__precacheManifest = (self.__precacheManifest || []).concat([
   {
-    "revision": "63bbcbf779a19f036d37df48a4afd82a",
+    "revision": "df8857ee24cfd5c7c249260963818cb6",
     "url": "/Guess-App/index.html"
   },
   {
@@ -8,7 +8,7 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
     "url": "/Guess-App/static/css/2.3ffaa857.chunk.css"
   },
   {
-    "revision": "35b97e50fdee0a0cf2d2",
+    "revision": "057cdf40dbe2ce996059",
     "url": "/Guess-App/static/css/main.40f9afd5.chunk.css"
   },
   {
@@ -20,8 +20,8 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
     "url": "/Guess-App/static/js/2.94496f4a.chunk.js.LICENSE.txt"
   },
   {
-    "revision": "35b97e50fdee0a0cf2d2",
-    "url": "/Guess-App/static/js/main.00e29d3a.chunk.js"
+    "revision": "057cdf40dbe2ce996059",
+    "url": "/Guess-App/static/js/main.5f87e4b0.chunk.js"
   },
   {
     "revision": "d5c728ce65800797379f",
