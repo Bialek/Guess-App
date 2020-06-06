@@ -167,9 +167,11 @@ async function detectByFileRequest(file) {
 function Home() {
   const { appData, setAppDate } = useContext(AppContext);
 
-  if (appData && appData.type !== undefined) {
-    setAppDate(initialAppData);
-  }
+  useEffect(() => {
+    if (appData && appData.type !== undefined) {
+      setAppDate(initialAppData);
+    }
+  }, []);
 
   return (
     <div>
@@ -189,9 +191,11 @@ function Home() {
 function UploadSelector() {
   const { appData, setAppDate } = useContext(AppContext);
 
-  if (appData && appData.type !== undefined) {
-    setAppDate(initialAppData);
-  }
+  useEffect(() => {
+    if (appData && appData.type !== undefined) {
+      setAppDate(initialAppData);
+    }
+  }, []);
 
   return (
     <div>
@@ -284,25 +288,17 @@ function UploadCamera() {
   }
 
   return (
-    <div>
-      <div className="content has-text-centered">
-        <h3 className="title is-3">Take a photo by your camera</h3>
+    <div className="content has-text-centered">
+      <h3 className="title is-3">Take a photo by your camera</h3>
+      <div className="video-container">
+        <video ref={videoRef} onCanPlay={handleCanPlay} autoPlay muted />
+        <canvas ref={canvasRef} width="1280" height="720 " />
       </div>
-      <div className="columns is-desktop">
-        <div className="column">
-          <div className="video-container">
-            <video ref={videoRef} onCanPlay={handleCanPlay} autoPlay muted />
-            <canvas ref={canvasRef} width="1280" height="720 " />
-          </div>
-        </div>
 
-        <div className="column has-text-right">
-          <button
-            className="button is-medium is-primary"
-            onClick={handleCapture}>
-            Submit
-          </button>
-        </div>
+      <div className=" has-text-right">
+        <button className="button is-medium is-primary" onClick={handleCapture}>
+          Submit
+        </button>
       </div>
     </div>
   );
@@ -441,7 +437,7 @@ function Display() {
     if (appData && appData.type === undefined) {
       history.push('/');
     }
-  }, [appData, isLoading, history, setAppDate]);
+  }, [appData]);
 
   return (
     <div>
@@ -474,32 +470,38 @@ function DetectedInfo() {
 
   if (appData.detectDate !== undefined) {
     const attributes = appData.detectDate.attributes;
-    data.age = attributes.age_est.value;
+    data.age = attributes.age_est && attributes.age_est.value;
 
-    data.ethnicity = Object.entries(attributes.ethnicity).find(
-      item => item[1].value === 'true'
-    )[0];
+    const foundEthnicity =
+      attributes.ethnicity &&
+      Object.entries(attributes.ethnicity).find(
+        item => item[1].value === 'true'
+      );
+    if (foundEthnicity !== undefined) {
+      data.ethnicity = foundEthnicity[0];
+    }
 
-    data.gender = attributes.gender.value;
+    data.gender = attributes.gender && attributes.gender.value;
 
-    data.eyesOpened = attributes.eyes.value === 'open';
+    data.eyesOpened = attributes.eyes && attributes.eyes.value === 'open';
 
     data.feeling = attributes.mood.value;
 
     if (data.gender === 'female') {
       data.element =
-        attributes.glasses.value === 'true' ||
-        attributes.dark_glasses.value === 'true'
+        (attributes.glasses && attributes.glasses.value === 'true') ||
+        (attributes.dark_glasses && attributes.dark_glasses.value === 'true')
           ? 'glasses'
-          : attributes.hat.value === 'true' && 'hat';
+          : attributes.hat && attributes.hat.value === 'true' && 'hat';
     }
 
     if (data.gender === 'male') {
       data.element =
-        attributes.mustache.value === 'true' ||
-        attributes.beard.value === 'true'
-          ? 'glasses'
-          : attributes.hat.value === 'true' && 'hat';
+        attributes.mustache && attributes.mustache.value === 'true'
+          ? 'mustache'
+          : attributes.beard && attributes.beard.value === 'true'
+          ? 'beard'
+          : attributes.hat && attributes.hat.value === 'true' && 'hat';
     }
   }
 
